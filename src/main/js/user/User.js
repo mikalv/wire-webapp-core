@@ -61,7 +61,7 @@ User.prototype.login = function (connectSocket) {
   var self = this;
 
   return new Promise(function (resolve) {
-    CryptoHelper.loadProtocolBuffers('node_modules/wire-webapp-protocol-messaging/proto/messages.proto')
+    CryptoHelper.loadProtocolBuffers()
       .then(function (builder) {
         self.protocolBuffer = builder.build();
         return self.service.user.login();
