@@ -23,5 +23,5 @@
     "type": "git",
     "url": "git+https://github.com/wireapp/wire-webapp-core.git"
   },
-  "version": "0.0.1"
+  "version": "0.1.0"
 }
