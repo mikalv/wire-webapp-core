@@ -15,7 +15,9 @@ Wire for Web's communication core.
 ```javascript
 var wire = require('wire-webapp-core');
 
-var user = new wire.User('name@mail.com', 'password').then(function (service) {
+var user = new wire.User('name@mail.com', 'password')
+.login()
+.then(function (service) {
   return service.conversation.sendTextMessage('conversation-id', 'Message');
 });
 ```
@@ -33,7 +35,9 @@ var argv = require('optimist')
 
 var user = new wire.User(argv.email, argv.password);
 
-user.login(true).then(function (service) {
+user
+.login(true)
+.then(function (service) {
   return service.conversation.sendTextMessage(argv.conversation, argv.message);
 })
 .then(function (service) {
