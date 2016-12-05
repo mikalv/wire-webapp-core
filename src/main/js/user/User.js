@@ -28,26 +28,25 @@ var CryptoHelper = require('../util/CryptoHelper');
 var UserAPI = require('./UserAPI');
 var UserService = require('./UserService');
 
-function User(email, password) {
+function User(credentials, cryptoboxInstance) {
   this.accessToken = undefined;
   this.backendURL = 'https://prod-nginz-https.wire.com';
-  this.user = undefined;
   this.clientInfo = {
     class: 'desktop',
     cookie: 'webapp@1224301118@temporary@1472638149000',
     label: `${platform.os.family}`,
     lastkey: undefined,
     model: platform.name,
-    password: password,
+    password: credentials.password,
     prekeys: undefined,
     sigkeys: undefined,
     type: 'temporary'
   };
-  this.cryptobox = new cryptobox.Cryptobox(new cryptobox.store.Cache());
-  this.email = email;
+  this.cryptobox = (cryptoboxInstance) ? cryptoboxInstance : new cryptobox.Cryptobox(new cryptobox.store.Cache());
+  this.email = credentials.email;
   this.logger = new Logdown({prefix: 'wire.core.user.User', alignOutput: true});
   this.myself = undefined;
-  this.password = password;
+  this.password = credentials.password;
   this.protocolBuffer = undefined;
   this.webSocket = undefined;
   this.webSocketIntervalID = undefined;
@@ -114,7 +113,6 @@ User.prototype.connectToWebSocket = function () {
 
       function send_ping() {
         socket.send(`Wire is so much nicer with internet!`);
-        self.logger.log(`Pinged...`);
       }
 
       self.webSocketIntervalID = setInterval(send_ping, 10000);

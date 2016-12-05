@@ -15,7 +15,7 @@ Wire for Web's communication core.
 ```javascript
 var wire = require('wire-webapp-core');
 
-var user = new wire.User('name@mail.com', 'password')
+var user = new wire.User({email: 'name@mail.com', password: 'secret'})
 .login()
 .then(function (service) {
   return service.conversation.sendTextMessage('conversation-id', 'Message');
@@ -25,18 +25,21 @@ var user = new wire.User('name@mail.com', 'password')
 ### Advanced example
 
 ```javascript
-var wire = require('wire-webapp-core');
 var argv = require('optimist')
   .alias('c', 'conversation')
   .alias('e', 'email')
   .alias('m', 'message')
   .alias('p', 'password')
   .argv;
+var cryptobox = require('wire-webapp-cryptobox');
+var wire = require('wire-webapp-core');
 
-var user = new wire.User(argv.email, argv.password);
+var box = new cryptobox.Cryptobox(new cryptobox.store.Cache(), 10);
+var user = new wire.User({email: argv.email, password: argv.password}, box);
+var connectWebSocket = true;
 
 user
-.login(true)
+.login(connectWebSocket)
 .then(function (service) {
   return service.conversation.sendTextMessage(argv.conversation, argv.message);
 })
