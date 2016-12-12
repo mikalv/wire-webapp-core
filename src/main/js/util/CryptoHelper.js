@@ -117,10 +117,15 @@ exports.sessionsFromPreKeyMap = function (userPreKeyMap, cryptobox) {
     var preKey;
     for (clientId in clientPreKeys) {
       preKey = clientPreKeys[clientId];
-      logger.log(`Creating session for user ID "${userId}" and client ID "${clientId}" with user's PreKey ID "${preKey.id}".`);
-      // TODO: Surround with try-catch
-      var session = sessionFromEncodedPreKeyBundle(userId, clientId, preKey.key, cryptobox);
-      promises.push(session);
+
+      if (preKey) {
+        logger.log(`Creating session for user ID "${userId}" and client ID "${clientId}" with user's PreKey ID "${preKey.id}".`);
+        // TODO: Surround with try-catch
+        var session = sessionFromEncodedPreKeyBundle(userId, clientId, preKey.key, cryptobox);
+        promises.push(session);
+      } else {
+        logger.log(`There is something wrong with client ID "${clientId}" from user ID "${userId}" (PreKey is "${preKey}").`);
+      }
     }
   }
 

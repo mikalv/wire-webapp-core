@@ -59,8 +59,8 @@ ConversationService.prototype.sendTextMessage = function (conversationId, text) 
       return Promise.all(promises);
     }).then(function (payloads) {
       return self.conversationAPI.sendMessage(conversationId, payloads);
-    }).then(function () {
-      self.logger.log(`Text (${text}) has been successfully sent to conversation (${conversationId}).`);
+    }).then(function (response) {
+      self.logger.log(`Text (${text}) has been successfully sent to conversation (${conversationId}).`, response);
       resolve(self.client.service);
     });
   });

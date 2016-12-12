@@ -69,11 +69,17 @@ ConversationAPI.prototype.getPreKeys = function (userClientMap) {
 
 ConversationAPI.prototype.sendMessage = function (conversationId, payloads) {
   var payloadMap = this.createPayLoadMap(payloads);
+  var hasContent = !!(Object.keys(payloadMap).length);
   var self = this;
+
+  var suffix = 'ignore_missing=false';
+  if (hasContent) {
+    suffix = 'ignore_missing=true';
+  }
 
   return popsicle.request({
     method: 'POST',
-    url: `${self.user.backendURL}/conversations/${conversationId}/otr/messages?ignore_missing=false`,
+    url: `${self.user.backendURL}/conversations/${conversationId}/otr/messages?${suffix}`,
     body: {
       sender: self.user.client.id,
       recipients: payloadMap
