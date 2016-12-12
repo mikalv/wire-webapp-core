@@ -19,6 +19,7 @@
 
 var Logdown = require('logdown');
 var popsicle = require('popsicle');
+var status = require('popsicle-status');
 
 /**
  * @constructor
@@ -42,7 +43,7 @@ UserAPI.prototype.login = function () {
     headers: {
       'Content-Type': 'application/json; charset=utf-8'
     }
-  }).use(popsicle.plugins.parse('json'));
+  }).use([status(), popsicle.plugins.parse('json')]);
 };
 
 UserAPI.prototype.logout = function (cookieLabel) {
@@ -61,7 +62,7 @@ UserAPI.prototype.logout = function (cookieLabel) {
       'Authorization': `Bearer ${decodeURIComponent(self.user.accessToken)}`,
       'Content-Type': 'application/json; charset=utf-8'
     }
-  }).use(popsicle.plugins.parse('json'));
+  }).use([status(), popsicle.plugins.parse('json')]);
 };
 
 UserAPI.prototype.removeCookies = function (labels) {
@@ -78,7 +79,7 @@ UserAPI.prototype.removeCookies = function (labels) {
     headers: {
       'Content-Type': 'application/json; charset=utf-8'
     }
-  }).use(popsicle.plugins.parse('json'));
+  }).use([status(), popsicle.plugins.parse('json')]);
 };
 
 UserAPI.prototype.registerClient = function (clientInfo) {
@@ -92,7 +93,7 @@ UserAPI.prototype.registerClient = function (clientInfo) {
       'Authorization': `Bearer ${decodeURIComponent(self.user.accessToken)}`,
       'Content-Type': 'application/json; charset=utf-8'
     }
-  }).use(popsicle.plugins.parse('json'));
+  }).use([status(), popsicle.plugins.parse('json')]);
 };
 
 UserAPI.prototype.getSelf = function () {
@@ -105,7 +106,7 @@ UserAPI.prototype.getSelf = function () {
       'Authorization': `Bearer ${decodeURIComponent(self.user.accessToken)}`,
       'Content-Type': 'application/json; charset=utf-8'
     }
-  }).use(popsicle.plugins.parse('json'));
+  }).use([status(), popsicle.plugins.parse('json')]);
 };
 
 UserAPI.prototype.updateConnectionStatus = function (userId, status) {
@@ -121,7 +122,7 @@ UserAPI.prototype.updateConnectionStatus = function (userId, status) {
       'Authorization': `Bearer ${decodeURIComponent(self.user.accessToken)}`,
       'Content-Type': 'application/json; charset=utf-8'
     }
-  }).use(popsicle.plugins.parse('json'));
+  }).use([status(), popsicle.plugins.parse('json')]);
 };
 
 module.exports = UserAPI;

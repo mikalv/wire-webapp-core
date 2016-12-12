@@ -19,6 +19,7 @@
 
 var Logdown = require('logdown');
 var popsicle = require('popsicle');
+var status = require('popsicle-status');
 
 /**
  * @constructor
@@ -64,7 +65,7 @@ ConversationAPI.prototype.getPreKeys = function (userClientMap) {
       'Authorization': `Bearer ${decodeURIComponent(self.user.accessToken)}`,
       'Content-Type': 'application/json; charset=utf-8'
     }
-  }).use(popsicle.plugins.parse('json'));
+  }).use([status(), popsicle.plugins.parse('json')]);
 };
 
 ConversationAPI.prototype.sendMessage = function (conversationId, payloads) {
@@ -88,7 +89,7 @@ ConversationAPI.prototype.sendMessage = function (conversationId, payloads) {
       'Authorization': `Bearer ${decodeURIComponent(self.user.accessToken)}`,
       'Content-Type': 'application/json; charset=utf-8'
     }
-  }).use(popsicle.plugins.parse('json'));
+  }).use([popsicle.plugins.parse('json')]);
 };
 
 module.exports = ConversationAPI;
