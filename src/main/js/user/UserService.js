@@ -35,7 +35,7 @@ function UserService(user) {
 UserService.prototype.login = function () {
   var self = this;
 
-  return new Promise(function (resolve) {
+  return new Promise(function (resolve, reject) {
     self.userAPI.login()
       .then(function (response) {
         // TODO: Such things should be handles with a "catch" block
@@ -54,29 +54,31 @@ UserService.prototype.login = function () {
         self.logger.log(`Access Token is "${self.user.accessToken}".`);
         return self.user.cryptobox.init();
       })
-      .then(function () {
+      .then(function (initialPreKeys) {
         var fingerprint = self.user.cryptobox.identity.public_key.fingerprint();
         self.logger.log(`Public fingerprint is "${fingerprint}".`);
+
+        // Serialize last resort PreKey
+        self.user.clientInfo.lastkey = self.user.cryptobox.serialize_prekey(self.user.cryptobox.lastResortPreKey);
+
+        // Serialize all other PreKeys
+        var serializedPreKeys = [];
+        initialPreKeys.forEach(function (preKey) {
+          var preKeyJson = self.user.cryptobox.serialize_prekey(preKey);
+          if (preKeyJson.id !== 65535) {
+            serializedPreKeys.push(preKeyJson);
+          }
+        });
+
+        self.user.clientInfo.prekeys = serializedPreKeys;
       })
       .then(function () {
         self.logger.log(`Creating signaling keys...`);
-        return CryptoHelper.generateSignalingKeys();
+        return CryptoHelper.generateSignalingKey();
       })
-      .then(function (signalingKeys) {
-        self.logger.log(`Created signaling keys.`);
-        self.user.clientInfo.sigkeys = signalingKeys;
-        self.logger.log(`Creating Last Resort PreKey...`);
-        return CryptoHelper.createLastResortPreKey(self.user.cryptobox);
-      })
-      .then(function (lastResort) {
-        self.logger.log(`Created Last Resort PreKey (ID "${lastResort.id}").`);
-        self.user.clientInfo.lastkey = lastResort;
-        self.logger.log(`Creating Standard PreKeys...`);
-        return CryptoHelper.createPreKey(self.user.cryptobox, 0);
-      })
-      .then(function (preKeys) {
-        self.user.clientInfo.prekeys = [preKeys];
-        self.logger.log(`Created "${self.user.clientInfo.prekeys.length}" Standard PreKey(s).`);
+      .then(function (signalingKey) {
+        self.user.clientInfo.sigkeys = signalingKey;
+        self.logger.log(`Created signaling key.`);
         self.logger.log(`Registering new "${self.user.clientInfo.type}" client of type "${self.user.clientInfo.class}/${self.user.clientInfo.model}/${self.user.clientInfo.label}" with cookie ID "${self.user.clientInfo.cookie}"...`);
         return self.userAPI.registerClient(self.user.clientInfo);
       })
@@ -87,7 +89,8 @@ UserService.prototype.login = function () {
       })
       .then(function (response) {
         resolve(response.body);
-      });
+      })
+      .catch(reject);
   });
 };
 
@@ -108,7 +111,6 @@ UserService.prototype.logout = function () {
         }
       });
   });
-
 };
 
 UserService.prototype.autoConnect = function (event) {
@@ -132,6 +134,22 @@ UserService.prototype.autoConnect = function (event) {
           self.logger.log('Auto-Connection failed', error);
         });
     }
+  });
+};
+
+UserService.prototype.uploadPreKeys = function (preKeys) {
+  var self = this;
+
+  return new Promise(function (resolve, reject) {
+    self.logger.log(`Uploading "${preKeys.length}" new PreKey(s) to the backend...`, preKeys);
+    self.userAPI.updateClient(preKeys)
+      .then(function (response) {
+        if (response.status === 200) {
+          resolve(response.body);
+        } else {
+          reject(response);
+        }
+      });
   });
 };
 

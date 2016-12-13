@@ -21,6 +21,7 @@ var bazinga64 = require('bazinga64');
 var cryptobox = require('wire-webapp-cryptobox');
 var Logdown = require('logdown');
 var platform = require('platform');
+var postal = require('postal');
 var WebSocket = require('ws');
 
 var ConversationService = require('../conversation/ConversationService');
@@ -53,13 +54,48 @@ function User(credentials, cryptoboxInstance) {
   this.service = {
     user: new UserService(this)
   };
+  this.subscribe();
 }
+
+// TODO: Make private
+User.prototype.subscribe = function () {
+  var self = this;
+  var channelName = cryptobox.Cryptobox.prototype.CHANNEL_CRYPTOBOX;
+  var topicName = cryptobox.Cryptobox.prototype.TOPIC_NEW_PREKEYS;
+
+  postal.subscribe({
+    channel: channelName,
+    topic: topicName,
+    callback: function (data) {
+      self.logger.log(`Received "${data.length}" new PreKey(s) (via "${channelName}:${topicName}").`, data);
+
+      var serializedPreKeys = [];
+      data.forEach(function (preKey) {
+        var preKeyJson = self.cryptobox.serialize_prekey(preKey);
+        serializedPreKeys.push(preKeyJson);
+      });
+
+      self.service.user.uploadPreKeys(serializedPreKeys)
+        .then(function () {
+          var ids = serializedPreKeys.map(function (serializedPreKey) {
+            return serializedPreKey.id;
+          }).join(', ');
+          self.logger.log(`Successfully uploaded "${serializedPreKeys.length}" new PreKey(s). IDs: ${ids}`);
+        })
+        .catch(function (response) {
+          self.logger.log(`Failure during PreKey upload.`, response);
+        });
+    }
+  });
+
+  this.logger.log(`Listening for external events on "${channelName}:${topicName}".`);
+};
 
 User.prototype.login = function (connectSocket) {
   var connectWebSocket = connectSocket || false;
   var self = this;
 
-  return new Promise(function (resolve) {
+  return new Promise(function (resolve, reject) {
     CryptoHelper.loadProtocolBuffers()
       .then(function (builder) {
         self.protocolBuffer = builder.build();
@@ -80,7 +116,8 @@ User.prototype.login = function (connectSocket) {
       .then(function (webSocket) {
         self.webSocket = webSocket;
         resolve(self.service);
-      });
+      })
+      .catch(reject);
   });
 };
 
@@ -123,7 +160,7 @@ User.prototype.connectToWebSocket = function () {
       var notification = JSON.parse(bazinga64.Converter.arrayBufferViewToStringUTF8(data));
       var events = notification.payload;
       for (var event of events) {
-        self.logger.log(`Received '${event.type}' event.`, JSON.stringify(event));
+        self.logger.log(`Received event of type "${event.type}".`, JSON.stringify(event));
 
         switch (event.type) {
           case 'conversation.otr-message-add':
@@ -134,7 +171,7 @@ User.prototype.connectToWebSocket = function () {
             self.service.user.autoConnect(event);
             break;
           default:
-            self.logger.log(`Unrecognized event`, event);
+            self.logger.log(`Unrecognized event (${event.type})`, event);
         }
       }
     });

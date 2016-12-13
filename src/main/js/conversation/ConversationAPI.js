@@ -19,6 +19,7 @@
 
 var Logdown = require('logdown');
 var popsicle = require('popsicle');
+var status = require('popsicle-status');
 
 /**
  * @constructor
@@ -64,16 +65,22 @@ ConversationAPI.prototype.getPreKeys = function (userClientMap) {
       'Authorization': `Bearer ${decodeURIComponent(self.user.accessToken)}`,
       'Content-Type': 'application/json; charset=utf-8'
     }
-  }).use(popsicle.plugins.parse('json'));
+  }).use([status(), popsicle.plugins.parse('json')]);
 };
 
 ConversationAPI.prototype.sendMessage = function (conversationId, payloads) {
   var payloadMap = this.createPayLoadMap(payloads);
+  var hasContent = !!(Object.keys(payloadMap).length);
   var self = this;
+
+  var suffix = 'ignore_missing=false';
+  if (hasContent) {
+    suffix = 'ignore_missing=true';
+  }
 
   return popsicle.request({
     method: 'POST',
-    url: `${self.user.backendURL}/conversations/${conversationId}/otr/messages?ignore_missing=false`,
+    url: `${self.user.backendURL}/conversations/${conversationId}/otr/messages?${suffix}`,
     body: {
       sender: self.user.client.id,
       recipients: payloadMap
@@ -82,7 +89,7 @@ ConversationAPI.prototype.sendMessage = function (conversationId, payloads) {
       'Authorization': `Bearer ${decodeURIComponent(self.user.accessToken)}`,
       'Content-Type': 'application/json; charset=utf-8'
     }
-  }).use(popsicle.plugins.parse('json'));
+  }).use([popsicle.plugins.parse('json')]);
 };
 
 module.exports = ConversationAPI;

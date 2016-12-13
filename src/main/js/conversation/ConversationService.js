@@ -39,7 +39,7 @@ ConversationService.prototype.sendTextMessage = function (conversationId, text) 
   var genericMessage = new self.client.protocolBuffer.GenericMessage(uuidV4());
   genericMessage.set('text', new self.client.protocolBuffer.Text(text));
 
-  return new Promise(function (resolve) {
+  return new Promise(function (resolve, reject) {
     self.logger.log(`Constructed Generic Message (ID "${genericMessage.message_id}").`);
     self.logger.log(`Getting lists of users (and their clients) in conversation (ID "${conversationId}").`);
     self.conversationAPI.sendMessage(conversationId).then(function (response) {
@@ -49,6 +49,7 @@ ConversationService.prototype.sendTextMessage = function (conversationId, text) 
       self.logger.log(`Received PreKeys (based on user/client map).`);
       return CryptoHelper.sessionsFromPreKeyMap(response.body, self.client.cryptobox);
     }).then(function (cryptoboxSessions) {
+      self.logger.log(`Established "${cryptoboxSessions.length}" sessions.`);
       var promises = [];
 
       cryptoboxSessions.forEach(function (cryptoboxSession) {
@@ -62,7 +63,7 @@ ConversationService.prototype.sendTextMessage = function (conversationId, text) 
     }).then(function () {
       self.logger.log(`Text (${text}) has been successfully sent to conversation (${conversationId}).`);
       resolve(self.client.service);
-    });
+    }).catch(reject);
   });
 };
 

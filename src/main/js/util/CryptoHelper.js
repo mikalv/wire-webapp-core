@@ -20,22 +20,11 @@
 var bazinga64 = require('bazinga64');
 var getRandomValues = require('get-random-values');
 var Logdown = require('logdown');
-var Proteus = require('wire-webapp-proteus');
 var ProtoBuf = require('protobufjs');
 var sodium = require('libsodium');
 
 var logger = new Logdown({prefix: 'wire.core.CryptoHelper', alignOutput: true});
 
-function arrayToBase64(array) {
-  return sodium.to_base64(new Uint8Array(array), true);
-}
-
-function preKeyToJSON(id, preKeyBundle) {
-  return {
-    "id": id,
-    "key": arrayToBase64(preKeyBundle)
-  };
-}
 
 exports.loadProtocolBuffers = function () {
   return new Promise(function (resolve) {
@@ -45,7 +34,7 @@ exports.loadProtocolBuffers = function () {
   });
 };
 
-exports.generateSignalingKeys = function () {
+exports.generateSignalingKey = function () {
   return new Promise(function (resolve) {
 
     // TODO: Outsource this part into Proteus.js
@@ -54,26 +43,12 @@ exports.generateSignalingKeys = function () {
     var hmac = sodium.crypto_auth_hmacsha256(randomBytes, sodium.crypto_hash_sha256('salt'));
 
     var encryptionKey = sodium.to_base64(hmac);
-    var mayKey = sodium.to_base64(hmac);
-    var signalingKeys = {
+    var macKey = sodium.to_base64(hmac);
+    var signalingKey = {
       enckey: encryptionKey,
-      mackey: mayKey
+      mackey: macKey
     };
-    resolve(signalingKeys);
-  });
-};
-
-exports.createLastResortPreKey = function (cryptobox) {
-  var id = Proteus.keys.PreKey.MAX_PREKEY_ID;
-  return exports.createPreKey(cryptobox, id);
-};
-
-exports.createPreKey = function (cryptobox, id) {
-  return new Promise(function (resolve) {
-    cryptobox.new_prekey(id).then(function (serialisedPreKeyBundle) {
-      var json = preKeyToJSON(id, serialisedPreKeyBundle);
-      resolve(json);
-    });
+    resolve(signalingKey);
   });
 };
 
@@ -117,10 +92,15 @@ exports.sessionsFromPreKeyMap = function (userPreKeyMap, cryptobox) {
     var preKey;
     for (clientId in clientPreKeys) {
       preKey = clientPreKeys[clientId];
-      logger.log(`Creating session for user ID "${userId}" and client ID "${clientId}" with user's PreKey ID "${preKey.id}".`);
-      // TODO: Surround with try-catch
-      var session = sessionFromEncodedPreKeyBundle(userId, clientId, preKey.key, cryptobox);
-      promises.push(session);
+
+      if (preKey) {
+        logger.log(`Creating session for user ID "${userId}" and client ID "${clientId}" with user's PreKey ID "${preKey.id}".`);
+        // TODO: Surround with try-catch
+        var session = sessionFromEncodedPreKeyBundle(userId, clientId, preKey.key, cryptobox);
+        promises.push(session);
+      } else {
+        logger.log(`There is something wrong with client ID "${clientId}" from user ID "${userId}" (PreKey is "${preKey}").`);
+      }
     }
   }
 
