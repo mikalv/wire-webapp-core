@@ -30,7 +30,7 @@ function UserAPI(user) {
   this.logger = new Logdown({prefix: 'wire.core.user.UserAPI', alignOutput: true});
 }
 
-UserAPI.prototype.login = function () {
+UserAPI.prototype.login = function() {
   var self = this;
 
   return popsicle.request({
@@ -46,7 +46,7 @@ UserAPI.prototype.login = function () {
   }).use([status(), popsicle.plugins.parse('json')]);
 };
 
-UserAPI.prototype.logout = function (cookieLabel) {
+UserAPI.prototype.logout = function(cookieLabel) {
   var self = this;
 
   // TODO: message: 'missing cookie'
@@ -65,7 +65,7 @@ UserAPI.prototype.logout = function (cookieLabel) {
   }).use([status(), popsicle.plugins.parse('json')]);
 };
 
-UserAPI.prototype.removeCookies = function (labels) {
+UserAPI.prototype.removeCookies = function(labels) {
   var self = this;
 
   return popsicle.request({
@@ -82,7 +82,7 @@ UserAPI.prototype.removeCookies = function (labels) {
   }).use([status(), popsicle.plugins.parse('json')]);
 };
 
-UserAPI.prototype.registerClient = function (clientInfo) {
+UserAPI.prototype.registerClient = function(clientInfo) {
   var self = this;
 
   return popsicle.request({
@@ -96,7 +96,7 @@ UserAPI.prototype.registerClient = function (clientInfo) {
   }).use([status(), popsicle.plugins.parse('json')]);
 };
 
-UserAPI.prototype.getSelf = function () {
+UserAPI.prototype.getSelf = function() {
   var self = this;
 
   return popsicle.request({
@@ -109,7 +109,7 @@ UserAPI.prototype.getSelf = function () {
   }).use([status(), popsicle.plugins.parse('json')]);
 };
 
-UserAPI.prototype.updateConnectionStatus = function (userId, status) {
+UserAPI.prototype.updateConnectionStatus = function(userId, status) {
   var self = this;
 
   return popsicle.request({
@@ -131,7 +131,7 @@ UserAPI.prototype.updateConnectionStatus = function (userId, status) {
  * @returns {Promise}
  * @see https://staging-nginz-https.zinfra.io/swagger-ui/#!/users/updateClient
  */
-UserAPI.prototype.updateClient = function (preKeys) {
+UserAPI.prototype.updateClient = function(preKeys) {
   var self = this;
 
   return popsicle.request({

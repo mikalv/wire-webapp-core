@@ -20,14 +20,12 @@
 var bazinga64 = require('bazinga64');
 var cryptobox = require('wire-webapp-cryptobox');
 var Logdown = require('logdown');
-var platform = require('platform');
-var postal = require('postal');
 var WebSocket = require('ws');
 
-var ConversationService = require('../conversation/ConversationService');
-var CryptoHelper = require('../util/CryptoHelper');
-var UserAPI = require('./UserAPI');
-var UserService = require('./UserService');
+var ConversationService = require('../conversation/ConversationService.js');
+var CryptoHelper = require('../util/CryptoHelper.js');
+var UserAPI = require('./UserAPI.js');
+var UserService = require('./UserService.js');
 
 function User(credentials, cryptoboxInstance) {
   this.accessToken = undefined;
@@ -35,9 +33,9 @@ function User(credentials, cryptoboxInstance) {
   this.clientInfo = {
     class: 'desktop',
     cookie: 'webapp@1224301118@temporary@1472638149000',
-    label: `${platform.os.family}`,
+    label: 'bot',
     lastkey: undefined,
-    model: platform.name,
+    model: 'node',
     password: credentials.password,
     prekeys: undefined,
     sigkeys: undefined,
@@ -58,62 +56,58 @@ function User(credentials, cryptoboxInstance) {
 }
 
 // TODO: Make private
-User.prototype.subscribe = function () {
+User.prototype.subscribe = function() {
   var self = this;
-  var channelName = cryptobox.Cryptobox.prototype.CHANNEL_CRYPTOBOX;
-  var topicName = cryptobox.Cryptobox.prototype.TOPIC_NEW_PREKEYS;
 
-  postal.subscribe({
-    channel: channelName,
-    topic: topicName,
-    callback: function (data) {
-      self.logger.log(`Received "${data.length}" new PreKey(s) (via "${channelName}:${topicName}").`, data);
+  function callback(data) {
+    self.logger.log(`Received "${data.length}" new PreKey(s) (via "${channelName}:${topicName}").`, data);
 
-      var serializedPreKeys = [];
-      data.forEach(function (preKey) {
-        var preKeyJson = self.cryptobox.serialize_prekey(preKey);
-        serializedPreKeys.push(preKeyJson);
+    var serializedPreKeys = [];
+    data.forEach(function(preKey) {
+      var preKeyJson = self.cryptobox.serialize_prekey(preKey);
+      serializedPreKeys.push(preKeyJson);
+    });
+
+    self.service.user.uploadPreKeys(serializedPreKeys)
+      .then(function() {
+        var ids = serializedPreKeys.map(function(serializedPreKey) {
+          return serializedPreKey.id;
+        }).join(', ');
+        self.logger.log(`Successfully uploaded "${serializedPreKeys.length}" new PreKey(s). IDs: ${ids}`);
+      })
+      .catch(function(response) {
+        self.logger.log(`Failure during PreKey upload.`, response);
       });
+  }
 
-      self.service.user.uploadPreKeys(serializedPreKeys)
-        .then(function () {
-          var ids = serializedPreKeys.map(function (serializedPreKey) {
-            return serializedPreKey.id;
-          }).join(', ');
-          self.logger.log(`Successfully uploaded "${serializedPreKeys.length}" new PreKey(s). IDs: ${ids}`);
-        })
-        .catch(function (response) {
-          self.logger.log(`Failure during PreKey upload.`, response);
-        });
-    }
-  });
-
-  this.logger.log(`Listening for external events on "${channelName}:${topicName}".`);
+  var topicName = cryptobox.Cryptobox.TOPIC.NEW_PREKEYS;
+  self.cryptobox.on(topicName, callback);
+  this.logger.log(`Listening for external events on "${topicName}".`);
 };
 
-User.prototype.login = function (connectSocket) {
+User.prototype.login = function(connectSocket) {
   var connectWebSocket = connectSocket || false;
   var self = this;
 
-  return new Promise(function (resolve, reject) {
+  return new Promise(function(resolve, reject) {
     CryptoHelper.loadProtocolBuffers()
-      .then(function (builder) {
+      .then(function(builder) {
         self.protocolBuffer = builder.build();
         return self.service.user.login();
       })
-      .then(function (selfInfo) {
+      .then(function(selfInfo) {
         self.myself = selfInfo;
         self.logger.log(`Successfully logged in (User ID "${self.myself.id}").`);
         self.service.conversation = new ConversationService(self);
       })
-      .then(function () {
+      .then(function() {
         if (connectWebSocket) {
           return self.connectToWebSocket();
         } else {
           return undefined;
         }
       })
-      .then(function (webSocket) {
+      .then(function(webSocket) {
         self.webSocket = webSocket;
         resolve(self.service);
       })
@@ -121,7 +115,7 @@ User.prototype.login = function (connectSocket) {
   });
 };
 
-User.prototype.disconnectFromWebSocket = function () {
+User.prototype.disconnectFromWebSocket = function() {
   if (this.webSocket) {
     this.logger.log("Disconnecting from WebSocket...");
     clearInterval(this.webSocketIntervalID);
@@ -132,10 +126,10 @@ User.prototype.disconnectFromWebSocket = function () {
 };
 
 // TODO: Make private
-User.prototype.connectToWebSocket = function () {
+User.prototype.connectToWebSocket = function() {
   var self = this;
 
-  return new Promise(function (resolve) {
+  return new Promise(function(resolve) {
     var url = `wss://prod-nginz-ssl.wire.com/await?access_token=${self.accessToken}&client=${self.client.id}`;
 
     var socket = new WebSocket(url);
@@ -183,24 +177,26 @@ User.prototype.connectToWebSocket = function () {
 };
 
 // TODO: Make private
-User.prototype.decryptMessage = function (event, ciphertext) {
+User.prototype.decryptMessage = function(event, ciphertext) {
   var self = this;
 
-  CryptoHelper.decryptMessage(self.cryptobox, event, ciphertext).then(function (decryptedMessage) {
-    var genericMessage = new self.protocolBuffer.GenericMessage.decode(decryptedMessage);
+  CryptoHelper.decryptMessage(self.cryptobox, event, ciphertext)
+    .then(function(decryptedMessage) {
+      var genericMessage = new self.protocolBuffer.GenericMessage.decode(decryptedMessage);
 
-    switch (genericMessage.content) {
-      case 'text':
-        var text = genericMessage.text.content;
-        self.logger.log(`Received text: "${text}".`);
-        break;
-      default:
-        self.logger.log(`Ignored event "${genericMessage.content}".`);
-    }
+      switch (genericMessage.content) {
+        case 'text':
+          var text = genericMessage.text.content;
+          self.logger.log(`Received text: "${text}".`);
+          break;
+        default:
+          self.logger.log(`Ignored event "${genericMessage.content}".`);
+      }
 
-  }).catch(function (error) {
-    self.logger.log(`Decryption failed: ${error.message} (${error.stack})`);
-  });
+    })
+    .catch(function(error) {
+      self.logger.log(`Decryption failed: ${error.message} (${error.stack})`);
+    });
 };
 
 module.exports = User;

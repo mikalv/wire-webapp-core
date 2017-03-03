@@ -19,8 +19,8 @@
 
 var Logdown = require('logdown');
 
-var CryptoHelper = require('../util/CryptoHelper');
-var UserAPI = require('./UserAPI');
+var CryptoHelper = require('../util/CryptoHelper.js');
+var UserAPI = require('./UserAPI.js');
 
 /**
  * @constructor
@@ -32,29 +32,29 @@ function UserService(user) {
   this.logger = new Logdown({prefix: 'wire.core.user.UserService', alignOutput: true});
 }
 
-UserService.prototype.login = function () {
+UserService.prototype.login = function() {
   var self = this;
 
-  return new Promise(function (resolve, reject) {
+  return new Promise(function(resolve, reject) {
     self.userAPI.login()
-      .then(function (response) {
+      .then(function(response) {
         // TODO: Such things should be handles with a "catch" block
         if (response.status === 429) {
           self.logger.warn(`Logins are too frequent. We need to logout the user on all clients...`);
           self.userAPI.removeCookies()
-            .then(function () {
+            .then(function() {
               return self.userAPI.login();
             });
         } else {
           return response;
         }
       })
-      .then(function (response) {
+      .then(function(response) {
         self.user.accessToken = response.body.access_token;
         self.logger.log(`Access Token is "${self.user.accessToken}".`);
         return self.user.cryptobox.init();
       })
-      .then(function (initialPreKeys) {
+      .then(function(initialPreKeys) {
         var fingerprint = self.user.cryptobox.identity.public_key.fingerprint();
         self.logger.log(`Public fingerprint is "${fingerprint}".`);
 
@@ -63,7 +63,7 @@ UserService.prototype.login = function () {
 
         // Serialize all other PreKeys
         var serializedPreKeys = [];
-        initialPreKeys.forEach(function (preKey) {
+        initialPreKeys.forEach(function(preKey) {
           var preKeyJson = self.user.cryptobox.serialize_prekey(preKey);
           if (preKeyJson.id !== 65535) {
             serializedPreKeys.push(preKeyJson);
@@ -72,22 +72,22 @@ UserService.prototype.login = function () {
 
         self.user.clientInfo.prekeys = serializedPreKeys;
       })
-      .then(function () {
+      .then(function() {
         self.logger.log(`Creating signaling keys...`);
         return CryptoHelper.generateSignalingKey();
       })
-      .then(function (signalingKey) {
+      .then(function(signalingKey) {
         self.user.clientInfo.sigkeys = signalingKey;
         self.logger.log(`Created signaling key.`);
         self.logger.log(`Registering new "${self.user.clientInfo.type}" client of type "${self.user.clientInfo.class}/${self.user.clientInfo.model}/${self.user.clientInfo.label}" with cookie ID "${self.user.clientInfo.cookie}"...`);
         return self.userAPI.registerClient(self.user.clientInfo);
       })
-      .then(function (response) {
+      .then(function(response) {
         self.user.client = response.body;
         self.logger.log(`Registered Client (ID "${self.user.client.id}").`);
         return self.userAPI.getSelf(self.user.accessToken);
       })
-      .then(function (response) {
+      .then(function(response) {
         resolve(response.body);
       })
       .catch(reject);
@@ -98,13 +98,13 @@ UserService.prototype.login = function () {
  * A logout removes the cookie being used on the backend.
  * @returns {Promise}
  */
-UserService.prototype.logout = function () {
+UserService.prototype.logout = function() {
   var self = this;
 
-  return new Promise(function (resolve) {
+  return new Promise(function(resolve) {
     self.logger.log(`Logging out User with ID "${self.user.myself.id}".`);
     self.userAPI.removeCookies([self.user.clientInfo.cookie])
-      .then(function (response) {
+      .then(function(response) {
         if (response.status === 200) {
           self.user.disconnectFromWebSocket();
           resolve(self.user.service);
@@ -113,10 +113,10 @@ UserService.prototype.logout = function () {
   });
 };
 
-UserService.prototype.autoConnect = function (event) {
+UserService.prototype.autoConnect = function(event) {
   var self = this;
 
-  return new Promise(function (resolve) {
+  return new Promise(function(resolve) {
     var involved = [event.connection.from, event.connection.to];
     var myIndex = involved.indexOf(self.user.myself.id);
     if (myIndex > -1) {
@@ -126,24 +126,24 @@ UserService.prototype.autoConnect = function (event) {
 
     if (event.connection.status === 'pending') {
       self.userAPI.updateConnectionStatus(self.user.accessToken, otherUserID, 'accepted')
-        .then(function (response) {
+        .then(function(response) {
           self.logger.log('Auto-Connection successful', response);
           resolve(self.user.service);
         })
-        .catch(function (error) {
+        .catch(function(error) {
           self.logger.log('Auto-Connection failed', error);
         });
     }
   });
 };
 
-UserService.prototype.uploadPreKeys = function (preKeys) {
+UserService.prototype.uploadPreKeys = function(preKeys) {
   var self = this;
 
-  return new Promise(function (resolve, reject) {
+  return new Promise(function(resolve, reject) {
     self.logger.log(`Uploading "${preKeys.length}" new PreKey(s) to the backend...`, preKeys);
     self.userAPI.updateClient(preKeys)
-      .then(function (response) {
+      .then(function(response) {
         if (response.status === 200) {
           resolve(response.body);
         } else {

@@ -1,0 +1,18 @@
+{
+  "dependencies": {
+    "bazinga64": "5.0.2",
+    "system.js": "0.20.9",
+    "pure-uuid": "1.4.4"
+  },
+  "description": "Wire for Web's communication core.",
+  "homepage": "https://github.com/wireapp/wire-webapp-core",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "license": "GPL-3.0",
+  "name": "wire-webapp-core"
+}

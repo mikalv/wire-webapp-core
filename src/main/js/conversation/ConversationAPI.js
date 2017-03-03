@@ -31,11 +31,11 @@ function ConversationAPI(user) {
 }
 
 // TODO: Make private
-ConversationAPI.prototype.createPayLoadMap = function (payloads) {
+ConversationAPI.prototype.createPayLoadMap = function(payloads) {
   var recipients = {};
 
   if (payloads) {
-    payloads.forEach(function (payload) {
+    payloads.forEach(function(payload) {
       var sessionId = payload.sessionId;
       var encrypted = payload.encryptedPayload;
 
@@ -54,7 +54,7 @@ ConversationAPI.prototype.createPayLoadMap = function (payloads) {
   return recipients;
 };
 
-ConversationAPI.prototype.getPreKeys = function (userClientMap) {
+ConversationAPI.prototype.getPreKeys = function(userClientMap) {
   var self = this;
 
   return popsicle.request({
@@ -68,7 +68,7 @@ ConversationAPI.prototype.getPreKeys = function (userClientMap) {
   }).use([status(), popsicle.plugins.parse('json')]);
 };
 
-ConversationAPI.prototype.sendMessage = function (conversationId, payloads) {
+ConversationAPI.prototype.sendMessage = function(conversationId, payloads) {
   var payloadMap = this.createPayLoadMap(payloads);
   var hasContent = !!(Object.keys(payloadMap).length);
   var self = this;

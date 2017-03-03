@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Demo</title>
+    <script src="../bower_components/system.js/dist/system.js" />
+    <script>
+      SystemJS.config({
+        map: {
+          'bazinga64': '../bower_components/bazinga64/dist/browser/bazinga64.js',
+          'wire': '../src/main/js/index.js'
+        },
+        packages: {
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <script>
+      SystemJS.import('wire').then(function(wire) {
+        console.log('Module', wire);
+      });
+    </script>
+  </body>
+</html>

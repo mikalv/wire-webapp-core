@@ -18,5 +18,5 @@
  */
 
 module.exports = {
-  User: require('./user/User')
+  User: require('./user/User.js')
 };

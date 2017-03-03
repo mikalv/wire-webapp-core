@@ -18,10 +18,9 @@
  */
 
 var Logdown = require('logdown');
-var uuidV4 = require('uuid/v4');
-
-var ConversationAPI = require('./ConversationAPI');
-var CryptoHelper = require('../util/CryptoHelper');
+var ConversationAPI = require('./ConversationAPI.js');
+var CryptoHelper = require('../util/CryptoHelper.js');
+var UUID = require('pure-uuid');
 
 /**
  * @constructor
@@ -33,37 +32,43 @@ function ConversationService(client) {
   this.logger = new Logdown({prefix: 'wire.core.conversation.ConversationService', alignOutput: true});
 }
 
-ConversationService.prototype.sendTextMessage = function (conversationId, text) {
+ConversationService.prototype.sendTextMessage = function(conversationId, text) {
   var self = this;
 
-  var genericMessage = new self.client.protocolBuffer.GenericMessage(uuidV4());
+  var genericMessage = new self.client.protocolBuffer.GenericMessage(new UUID(4).format());
   genericMessage.set('text', new self.client.protocolBuffer.Text(text));
 
-  return new Promise(function (resolve, reject) {
+  return new Promise(function(resolve, reject) {
     self.logger.log(`Constructed Generic Message (ID "${genericMessage.message_id}").`);
     self.logger.log(`Getting lists of users (and their clients) in conversation (ID "${conversationId}").`);
-    self.conversationAPI.sendMessage(conversationId).then(function (response) {
-      self.logger.log(`Received user/client map.`);
-      return self.conversationAPI.getPreKeys(response.body.missing);
-    }).then(function (response) {
-      self.logger.log(`Received PreKeys (based on user/client map).`);
-      return CryptoHelper.sessionsFromPreKeyMap(response.body, self.client.cryptobox);
-    }).then(function (cryptoboxSessions) {
-      self.logger.log(`Established "${cryptoboxSessions.length}" sessions.`);
-      var promises = [];
+    self.conversationAPI.sendMessage(conversationId)
+      .then(function(response) {
+        self.logger.log(`Received user/client map.`);
+        return self.conversationAPI.getPreKeys(response.body.missing);
+      })
+      .then(function(response) {
+        self.logger.log(`Received PreKeys (based on user/client map).`);
+        return CryptoHelper.sessionsFromPreKeyMap(response.body, self.client.cryptobox);
+      })
+      .then(function(cryptoboxSessions) {
+        self.logger.log(`Established "${cryptoboxSessions.length}" sessions.`);
+        var promises = [];
 
-      cryptoboxSessions.forEach(function (cryptoboxSession) {
-        var payloadInfo = CryptoHelper.encryptPayloadAndSaveSession(cryptoboxSession, genericMessage, self.client.cryptobox);
-        promises.push(payloadInfo);
-      });
+        cryptoboxSessions.forEach(function(cryptoboxSession) {
+          var payloadInfo = CryptoHelper.encryptPayloadAndSaveSession(cryptoboxSession, genericMessage, self.client.cryptobox);
+          promises.push(payloadInfo);
+        });
 
-      return Promise.all(promises);
-    }).then(function (payloads) {
-      return self.conversationAPI.sendMessage(conversationId, payloads);
-    }).then(function () {
-      self.logger.log(`Text (${text}) has been successfully sent to conversation (${conversationId}).`);
-      resolve(self.client.service);
-    }).catch(reject);
+        return Promise.all(promises);
+      })
+      .then(function(payloads) {
+        return self.conversationAPI.sendMessage(conversationId, payloads);
+      })
+      .then(function() {
+        self.logger.log(`Text (${text}) has been successfully sent to conversation (${conversationId}).`);
+        resolve(self.client.service);
+      })
+      .catch(reject);
   });
 };
 
