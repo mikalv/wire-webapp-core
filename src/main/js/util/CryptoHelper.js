@@ -17,7 +17,6 @@
  *
  */
 
-var bazinga64 = require('bazinga64');
 var Logdown = require('logdown');
 var ProtoBuf = require('protobufjs');
 var sodium = require('libsodium-wrappers-sumo');
@@ -100,11 +99,10 @@ exports.encryptPayloadAndSaveSession = function(cryptoboxSession, genericMessage
   return new Promise(function(resolve) {
     cryptoboxInstance.encrypt(cryptoboxSession.id, new Uint8Array(genericMessage.toArrayBuffer()))
       .then(function(encryptedPayload) {
-        var encoded = bazinga64.Encoder.toBase64(encryptedPayload);
-        var genericMessageEncryptedBase64 = encoded.asString;
+        var encoded = sodium.to_base64(new Uint8Array(encryptedPayload), true);
         resolve({
           sessionId: cryptoboxSession.id,
-          encryptedPayload: genericMessageEncryptedBase64
+          encryptedPayload: encoded
         });
       });
   });
