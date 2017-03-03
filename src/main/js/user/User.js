@@ -58,9 +58,10 @@ function User(credentials, cryptoboxInstance) {
 // TODO: Make private
 User.prototype.subscribe = function() {
   var self = this;
+  var topicName = cryptobox.Cryptobox.TOPIC.NEW_PREKEYS;
 
   function callback(data) {
-    self.logger.log(`Received "${data.length}" new PreKey(s) (via "${channelName}:${topicName}").`, data);
+    self.logger.log(`Received "${data.length}" new PreKey(s) (via "${topicName}").`, data);
 
     var serializedPreKeys = [];
     data.forEach(function(preKey) {
@@ -80,7 +81,6 @@ User.prototype.subscribe = function() {
       });
   }
 
-  var topicName = cryptobox.Cryptobox.TOPIC.NEW_PREKEYS;
   self.cryptobox.on(topicName, callback);
   this.logger.log(`Listening for external events on "${topicName}".`);
 };
