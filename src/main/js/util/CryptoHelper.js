@@ -17,9 +17,9 @@
  *
  */
 
+var bazinga64 = require('bazinga64');
 var Logdown = require('logdown');
 var ProtoBuf = require('protobufjs');
-var sodium = require('libsodium-wrappers-sumo');
 
 var logger = new Logdown({prefix: 'wire.core.CryptoHelper', alignOutput: true});
 
@@ -50,14 +50,14 @@ exports.decryptMessage = function(boxInstance, event, ciphertext) {
     if (ciphertext === undefined) {
       return reject(new Error('Ciphertext is missing.'));
     } else {
-      var messageBytes = sodium.from_base64(ciphertext);
+      var messageBytes = bazinga64.Decoder.fromBase64(ciphertext).asBytes;
       boxInstance.decrypt(sessionId, messageBytes.buffer).then(resolve).catch(reject);
     }
   });
 };
 
 function sessionFromEncodedPreKeyBundle(userId, clientId, encodedPreKeyBundle, cryptoboxInstance) {
-  var decodedPreKeyBundle = sodium.from_base64(encodedPreKeyBundle);
+  var decodedPreKeyBundle = bazinga64.Decoder.fromBase64(encodedPreKeyBundle).asBytes;
   var sessionId = `${userId}@${clientId}`;
   return cryptoboxInstance.session_from_prekey(sessionId, decodedPreKeyBundle.buffer);
 };
@@ -99,7 +99,7 @@ exports.encryptPayloadAndSaveSession = function(cryptoboxSession, genericMessage
   return new Promise(function(resolve) {
     cryptoboxInstance.encrypt(cryptoboxSession.id, new Uint8Array(genericMessage.toArrayBuffer()))
       .then(function(encryptedPayload) {
-        var encoded = sodium.to_base64(new Uint8Array(encryptedPayload), true);
+        var encoded = bazinga64.Encoder.toBase64(encryptedPayload).asString;
         resolve({
           sessionId: cryptoboxSession.id,
           encryptedPayload: encoded

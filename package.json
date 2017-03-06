@@ -4,7 +4,7 @@
     "url": "https://github.com/wireapp/wire-webapp-core/issues"
   },
   "dependencies": {
-    "bazinga64": "5.0.2",
+    "bazinga64": "5.0.3",
     "logdown": "2.0.3",
     "popsicle": "9.1.0",
     "popsicle-status": "2.0.0",
