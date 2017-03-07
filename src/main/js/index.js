@@ -18,5 +18,8 @@
  */
 
 module.exports = {
-  User: require('./user/User.js')
+  User: require('./user/User'),
+  util: {
+    CryptoHelper: require('./util/CryptoHelper')
+  }
 };

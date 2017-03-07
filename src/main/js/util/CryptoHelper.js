@@ -21,6 +21,7 @@ var bazinga64 = require('bazinga64');
 var Logdown = require('logdown');
 var ProtoBuf = require('protobufjs');
 
+// TODO: Initialize the CryptoHelper with a "cryptobox"
 var logger = new Logdown({prefix: 'wire.core.CryptoHelper', alignOutput: true});
 
 exports.loadProtocolBuffers = function() {
@@ -56,54 +57,47 @@ exports.decryptMessage = function(boxInstance, event, ciphertext) {
   });
 };
 
-function sessionFromEncodedPreKeyBundle(userId, clientId, encodedPreKeyBundle, cryptoboxInstance) {
-  var decodedPreKeyBundle = bazinga64.Decoder.fromBase64(encodedPreKeyBundle).asBytes;
-  var sessionId = `${userId}@${clientId}`;
-  return cryptoboxInstance.session_from_prekey(sessionId, decodedPreKeyBundle.buffer);
-};
+function constructSessionId(userId, clientId) {
+  return `${userId}@${clientId}`;
+}
 
-exports.sessionsFromPreKeyMap = function(userPreKeyMap, cryptobox) {
-  var clientPreKeys;
-  var cryptoboxSessionMap = {};
-  var promises = [];
+function _encrypt(cryptoboxInstance, sessionId, genericMessage, decodedPreKeyBundle) {
+  return Promise.resolve()
+    .then(function() {
+      return cryptoboxInstance.encrypt(sessionId, new Uint8Array(genericMessage.toArrayBuffer()), decodedPreKeyBundle.buffer);
+    })
+    .then(function(encryptedPayload) {
+      return bazinga64.Encoder.toBase64(encryptedPayload).asString;
+    })
+    .catch(function(error) {
+      logger.warn(`Failed encrypting '${genericMessage.content}' message for session '${sessionId}': ${error.message}`, error);
+      return '💣';
+    })
+    .then(function(encryptedPayload) {
+      return {
+        sessionId: sessionId,
+        encryptedPayload: encryptedPayload
+      };
+    });
+}
+
+exports.encrypt = function(cryptoboxInstance, genericMessage, preKeyMap) {
   var recipients = {};
-  var userId;
+  var encryptions = [];
 
-  for (userId in userPreKeyMap) {
+  for (var userId in preKeyMap) {
     recipients[userId] = {};
-    clientPreKeys = userPreKeyMap[userId];
-    if (cryptoboxSessionMap[userId] == null) {
-      cryptoboxSessionMap[userId] = {};
-    }
+    for (var clientId in preKeyMap[userId]) {
+      var preKeyPayload = preKeyMap[userId][clientId];
+      var preKey = preKeyPayload.key;
 
-    var clientId;
-    var preKey;
-    for (clientId in clientPreKeys) {
-      preKey = clientPreKeys[clientId];
 
-      if (preKey) {
-        logger.log(`Creating session for user ID "${userId}" and client ID "${clientId}" with user's PreKey ID "${preKey.id}".`);
-        // TODO: Surround with try-catch
-        var session = sessionFromEncodedPreKeyBundle(userId, clientId, preKey.key, cryptobox);
-        promises.push(session);
-      } else {
-        logger.log(`There is something wrong with client ID "${clientId}" from user ID "${userId}" (PreKey is "${preKey}").`);
-      }
+      var sessionId = constructSessionId(userId, clientId);
+      var decodedPreKeyBundle = bazinga64.Decoder.fromBase64(preKey).asBytes;
+
+      encryptions.push(_encrypt(cryptoboxInstance, sessionId, genericMessage, decodedPreKeyBundle));
     }
   }
 
-  return Promise.all(promises);
-};
-
-exports.encryptPayloadAndSaveSession = function(cryptoboxSession, genericMessage, cryptoboxInstance) {
-  return new Promise(function(resolve) {
-    cryptoboxInstance.encrypt(cryptoboxSession.id, new Uint8Array(genericMessage.toArrayBuffer()))
-      .then(function(encryptedPayload) {
-        var encoded = bazinga64.Encoder.toBase64(encryptedPayload).asString;
-        resolve({
-          sessionId: cryptoboxSession.id,
-          encryptedPayload: encoded
-        });
-      });
-  });
+  return Promise.all(encryptions);
 };

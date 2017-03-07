@@ -11,6 +11,7 @@
     "protobufjs": "5.0.2",
     "pure-uuid": "1.4.4",
     "wire-webapp-cryptobox": "4.0.1",
+    "wire-webapp-protocol-messaging": "1.18.0",
     "ws": "1.1.1"
   },
   "devDependencies": {

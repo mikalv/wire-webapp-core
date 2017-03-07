@@ -47,26 +47,19 @@ ConversationService.prototype.sendTextMessage = function(conversationId, text) {
         return self.conversationAPI.getPreKeys(response.body.missing);
       })
       .then(function(response) {
-        self.logger.log(`Received PreKeys (based on user/client map).`);
-        return CryptoHelper.sessionsFromPreKeyMap(response.body, self.client.cryptobox);
-      })
-      .then(function(cryptoboxSessions) {
-        self.logger.log(`Established "${cryptoboxSessions.length}" sessions.`);
-        var promises = [];
-
-        cryptoboxSessions.forEach(function(cryptoboxSession) {
-          var payloadInfo = CryptoHelper.encryptPayloadAndSaveSession(cryptoboxSession, genericMessage, self.client.cryptobox);
-          promises.push(payloadInfo);
-        });
-
-        return Promise.all(promises);
+        self.logger.log(`Received PreKeys for "${Object.keys(response.body).length}" users (based on user/client map).`);
+        return CryptoHelper.encrypt(self.client.cryptobox, genericMessage, response.body);
       })
       .then(function(payloads) {
         return self.conversationAPI.sendMessage(conversationId, payloads);
       })
-      .then(function() {
-        self.logger.log(`Text (${text}) has been successfully sent to conversation (${conversationId}).`);
-        resolve(self.client.service);
+      .then(function(response) {
+        if (response.status === 400) {
+          reject(new Error(response.body.message));
+        } else {
+          self.logger.log(`Text (${text}) has been successfully sent to conversation (${conversationId}).`);
+          resolve(self.client.service);
+        }
       })
       .catch(reject);
   });

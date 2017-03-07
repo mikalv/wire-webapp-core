@@ -1,6 +1,7 @@
-const wire = require('../src/main/js/index');
+const wire = require('../../../../src/main/js/index');
 
-describe('User', function() {
+describe('CryptoHelper', function() {
+
   describe('constructor', function() {
     it('constructs a new user', function() {
       const credentials = {
@@ -12,4 +13,5 @@ describe('User', function() {
       expect(user.clientInfo.password).toBe(credentials.password);
     });
   });
+
 });

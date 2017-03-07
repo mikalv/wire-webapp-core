@@ -30,7 +30,7 @@ function ConversationAPI(user) {
   this.logger = new Logdown({prefix: 'wire.core.conversation.ConversationAPI', alignOutput: true});
 }
 
-// TODO: Make private
+// TODO: Move to CryptoHelper!
 ConversationAPI.prototype.createPayLoadMap = function(payloads) {
   var recipients = {};
 
