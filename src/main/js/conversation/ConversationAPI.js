@@ -17,9 +17,11 @@
  *
  */
 
-var Logdown = require('logdown');
-var popsicle = require('popsicle');
-var status = require('popsicle-status');
+'use strict';
+
+const Logdown = require('logdown');
+const popsicle = require('popsicle');
+const status = require('popsicle-status');
 
 /**
  * @constructor
@@ -32,16 +34,16 @@ function ConversationAPI(user) {
 
 // TODO: Move to CryptoHelper!
 ConversationAPI.prototype.createPayLoadMap = function(payloads) {
-  var recipients = {};
+  const recipients = {};
 
   if (payloads) {
     payloads.forEach(function(payload) {
-      var sessionId = payload.sessionId;
-      var encrypted = payload.encryptedPayload;
+      const sessionId = payload.sessionId;
+      const encrypted = payload.encryptedPayload;
 
-      var parts = sessionId.split('@');
-      var userId = parts[0];
-      var clientId = parts[1];
+      const parts = sessionId.split('@');
+      const userId = parts[0];
+      const clientId = parts[1];
 
       if (recipients[userId] === undefined) {
         recipients[userId] = {};
@@ -55,7 +57,7 @@ ConversationAPI.prototype.createPayLoadMap = function(payloads) {
 };
 
 ConversationAPI.prototype.getPreKeys = function(userClientMap) {
-  var self = this;
+  let self = this;
 
   return popsicle.request({
     method: 'POST',
@@ -63,17 +65,17 @@ ConversationAPI.prototype.getPreKeys = function(userClientMap) {
     body: userClientMap,
     headers: {
       'Authorization': `Bearer ${decodeURIComponent(self.user.accessToken)}`,
-      'Content-Type': 'application/json; charset=utf-8'
-    }
+      'Content-Type': 'application/json; charset=utf-8',
+    },
   }).use([status(), popsicle.plugins.parse('json')]);
 };
 
 ConversationAPI.prototype.sendMessage = function(conversationId, payloads) {
-  var payloadMap = this.createPayLoadMap(payloads);
-  var hasContent = !!(Object.keys(payloadMap).length);
-  var self = this;
+  const payloadMap = this.createPayLoadMap(payloads);
+  const hasContent = !!(Object.keys(payloadMap).length);
+  let self = this;
 
-  var suffix = 'ignore_missing=false';
+  let suffix = 'ignore_missing=false';
   if (hasContent) {
     suffix = 'ignore_missing=true';
   }
@@ -83,12 +85,12 @@ ConversationAPI.prototype.sendMessage = function(conversationId, payloads) {
     url: `${self.user.backendURL}/conversations/${conversationId}/otr/messages?${suffix}`,
     body: {
       sender: self.user.client.id,
-      recipients: payloadMap
+      recipients: payloadMap,
     },
     headers: {
       'Authorization': `Bearer ${decodeURIComponent(self.user.accessToken)}`,
-      'Content-Type': 'application/json; charset=utf-8'
-    }
+      'Content-Type': 'application/json; charset=utf-8',
+    },
   }).use([popsicle.plugins.parse('json')]);
 };
 

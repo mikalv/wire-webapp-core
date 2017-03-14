@@ -20,7 +20,7 @@ class CryptoboxService {
       .catch(error => '💣')
       .then(encryptedPayload => ({
         sessionId,
-        encryptedPayload
+        encryptedPayload,
       }));
   }
 
@@ -37,15 +37,15 @@ class CryptoboxService {
           .catch(reject);
       }
     });
-  };
+  }
 
   encrypt(typedArray, preKeyMap) {
     const recipients = {};
     const encryptions = [];
 
-    for (const userId in preKeyMap) {
+    for (let userId in preKeyMap) {
       recipients[userId] = {};
-      for (const clientId in preKeyMap[userId]) {
+      for (let clientId in preKeyMap[userId]) {
         const preKeyPayload = preKeyMap[userId][clientId];
         const preKey = preKeyPayload.key;
 
@@ -64,7 +64,7 @@ class CryptoboxService {
     return Promise.resolve()
       .then(() => ({
         enckey: 'Wuec0oJi9/q9VsgOil9Ds4uhhYwBT+CAUrvi/S9vcz0=',
-        mackey: 'Wuec0oJi9/q9VsgOil9Ds4uhhYwBT+CAUrvi/S9vcz0='
+        mackey: 'Wuec0oJi9/q9VsgOil9Ds4uhhYwBT+CAUrvi/S9vcz0=',
       }));
   }
 }

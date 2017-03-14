@@ -29,6 +29,7 @@
   },
   "scripts": {
     "postinstall": "bower install",
+    "lint": "eslint src/main/js/**/*.js --fix",
     "start": "gulp",
     "test": "jasmine"
   },

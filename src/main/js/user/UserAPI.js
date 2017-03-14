@@ -17,9 +17,11 @@
  *
  */
 
-var Logdown = require('logdown');
-var popsicle = require('popsicle');
-var status = require('popsicle-status');
+'use strict';
+
+const Logdown = require('logdown');
+const popsicle = require('popsicle');
+const status = require('popsicle-status');
 
 /**
  * @constructor
@@ -31,23 +33,23 @@ function UserAPI(user) {
 }
 
 UserAPI.prototype.login = function() {
-  var self = this;
+  let self = this;
 
   return popsicle.request({
     method: 'POST',
     url: `${self.user.backendURL}/login?persist=false`,
     body: {
       email: self.user.email,
-      password: self.user.password
+      password: self.user.password,
     },
     headers: {
-      'Content-Type': 'application/json; charset=utf-8'
-    }
+      'Content-Type': 'application/json; charset=utf-8',
+    },
   }).use([status(), popsicle.plugins.parse('json')]);
 };
 
 UserAPI.prototype.logout = function(cookieLabel) {
-  var self = this;
+  let self = this;
 
   // TODO: message: 'missing cookie'
   // TODO: We need to use 'withCredentials' (to send the cookie) which is not available with Node.js:
@@ -56,17 +58,17 @@ UserAPI.prototype.logout = function(cookieLabel) {
     method: 'POST',
     url: `${self.user.backendURL}/access/logout`,
     body: {
-      access_token: self.user.accessToken
+      access_token: self.user.accessToken,
     },
     headers: {
       'Authorization': `Bearer ${decodeURIComponent(self.user.accessToken)}`,
-      'Content-Type': 'application/json; charset=utf-8'
-    }
+      'Content-Type': 'application/json; charset=utf-8',
+    },
   }).use([status(), popsicle.plugins.parse('json')]);
 };
 
 UserAPI.prototype.removeCookies = function(labels) {
-  var self = this;
+  let self = this;
 
   return popsicle.request({
     method: 'POST',
@@ -74,16 +76,16 @@ UserAPI.prototype.removeCookies = function(labels) {
     body: {
       email: self.user.email,
       password: self.user.password,
-      labels: labels
+      labels: labels,
     },
     headers: {
-      'Content-Type': 'application/json; charset=utf-8'
-    }
+      'Content-Type': 'application/json; charset=utf-8',
+    },
   }).use([status(), popsicle.plugins.parse('json')]);
 };
 
 UserAPI.prototype.registerClient = function(clientInfo) {
-  var self = this;
+  let self = this;
 
   return popsicle.request({
     method: 'POST',
@@ -91,37 +93,37 @@ UserAPI.prototype.registerClient = function(clientInfo) {
     body: clientInfo,
     headers: {
       'Authorization': `Bearer ${decodeURIComponent(self.user.accessToken)}`,
-      'Content-Type': 'application/json; charset=utf-8'
-    }
+      'Content-Type': 'application/json; charset=utf-8',
+    },
   }).use([status(), popsicle.plugins.parse('json')]);
 };
 
 UserAPI.prototype.getSelf = function() {
-  var self = this;
+  let self = this;
 
   return popsicle.request({
     method: 'GET',
     url: `${self.user.backendURL}/self`,
     headers: {
       'Authorization': `Bearer ${decodeURIComponent(self.user.accessToken)}`,
-      'Content-Type': 'application/json; charset=utf-8'
-    }
+      'Content-Type': 'application/json; charset=utf-8',
+    },
   }).use([status(), popsicle.plugins.parse('json')]);
 };
 
-UserAPI.prototype.updateConnectionStatus = function(userId, status) {
-  var self = this;
+UserAPI.prototype.updateConnectionStatus = function(userId, connectionStatus) {
+  let self = this;
 
   return popsicle.request({
     method: 'PUT',
     url: `${self.user.backendURL}/connections/${userId}`,
     body: {
-      status: status
+      status: connectionStatus,
     },
     headers: {
       'Authorization': `Bearer ${decodeURIComponent(self.user.accessToken)}`,
-      'Content-Type': 'application/json; charset=utf-8'
-    }
+      'Content-Type': 'application/json; charset=utf-8',
+    },
   }).use([status(), popsicle.plugins.parse('json')]);
 };
 
@@ -132,18 +134,18 @@ UserAPI.prototype.updateConnectionStatus = function(userId, status) {
  * @see https://staging-nginz-https.zinfra.io/swagger-ui/#!/users/updateClient
  */
 UserAPI.prototype.updateClient = function(preKeys) {
-  var self = this;
+  let self = this;
 
   return popsicle.request({
     method: 'PUT',
     url: `${self.user.backendURL}/clients/${self.user.client.id}`,
     body: {
-      prekeys: preKeys
+      prekeys: preKeys,
     },
     headers: {
       'Authorization': `Bearer ${decodeURIComponent(self.user.accessToken)}`,
-      'Content-Type': 'application/json; charset=utf-8'
-    }
+      'Content-Type': 'application/json; charset=utf-8',
+    },
   }).use([status(), popsicle.plugins.parse('json')]);
 };
 

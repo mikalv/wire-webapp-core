@@ -17,6 +17,8 @@
  *
  */
 
+'use strict';
+
 const bazinga64 = require('bazinga64');
 const cryptobox = require('wire-webapp-cryptobox');
 const Logdown = require('logdown');
@@ -25,7 +27,6 @@ const WebSocket = require('ws');
 
 const ConversationService = require('../conversation/ConversationService.js');
 const CryptoboxService = require('../cryptobox/CryptoboxService');
-const UserAPI = require('./UserAPI.js');
 const UserService = require('./UserService.js');
 
 function User(credentials, cryptoboxInstance) {
@@ -40,7 +41,7 @@ function User(credentials, cryptoboxInstance) {
     password: credentials.password,
     prekeys: undefined,
     sigkeys: undefined,
-    type: 'temporary'
+    type: 'temporary',
   };
   this.cryptobox = (cryptoboxInstance) ? cryptoboxInstance : new cryptobox.Cryptobox(new cryptobox.store.Cache());
   this.cryptoboxService = new CryptoboxService(this.cryptobox);
@@ -52,34 +53,34 @@ function User(credentials, cryptoboxInstance) {
   this.webSocket = undefined;
   this.webSocketIntervalID = undefined;
   this.service = {
-    user: new UserService(this)
+    user: new UserService(this),
   };
   this.subscribe();
 }
 
 // TODO: Make private
 User.prototype.subscribe = function() {
-  var self = this;
-  var topicName = cryptobox.Cryptobox.TOPIC.NEW_PREKEYS;
+  let self = this;
+  const topicName = cryptobox.Cryptobox.TOPIC.NEW_PREKEYS;
 
   function callback(data) {
     self.logger.log(`Received "${data.length}" new PreKey(s) (via "${topicName}").`);
 
-    var serializedPreKeys = [];
+    const serializedPreKeys = [];
     data.forEach(function(preKey) {
-      var preKeyJson = self.cryptobox.serialize_prekey(preKey);
+      const preKeyJson = self.cryptobox.serialize_prekey(preKey);
       serializedPreKeys.push(preKeyJson);
     });
 
     self.service.user.uploadPreKeys(serializedPreKeys)
       .then(function() {
-        var ids = serializedPreKeys.map(function(serializedPreKey) {
+        const ids = serializedPreKeys.map(function(serializedPreKey) {
           return serializedPreKey.id;
         }).join(', ');
         self.logger.log(`Successfully uploaded "${serializedPreKeys.length}" new PreKey(s). IDs: ${ids}`);
       })
       .catch(function(response) {
-        self.logger.log(`Failure during PreKey upload.`, response);
+        self.logger.log('Failure during PreKey upload.', response);
       });
   }
 
@@ -88,8 +89,8 @@ User.prototype.subscribe = function() {
 };
 
 User.prototype.login = function(connectSocket) {
-  var connectWebSocket = connectSocket || false;
-  var self = this;
+  const connectWebSocket = connectSocket || false;
+  let self = this;
 
   return new Promise(function(resolve, reject) {
     // TODO: Use new Protobuf.js API
@@ -122,22 +123,22 @@ User.prototype.login = function(connectSocket) {
 
 User.prototype.disconnectFromWebSocket = function() {
   if (this.webSocket) {
-    this.logger.log("Disconnecting from WebSocket...");
+    this.logger.log('Disconnecting from WebSocket...');
     clearInterval(this.webSocketIntervalID);
     this.webSocket.close();
   } else {
-    this.logger.warn("There is no WebSocket connection which can be closed.");
+    this.logger.warn('There is no WebSocket connection which can be closed.');
   }
 };
 
 // TODO: Make private
 User.prototype.connectToWebSocket = function() {
-  var self = this;
+  let self = this;
 
   return new Promise(function(resolve) {
-    var url = `wss://prod-nginz-ssl.wire.com/await?access_token=${self.accessToken}&client=${self.client.id}`;
+    const url = `wss://prod-nginz-ssl.wire.com/await?access_token=${self.accessToken}&client=${self.client.id}`;
 
-    var socket = new WebSocket(url);
+    const socket = new WebSocket(url);
     socket.binaryType = 'arraybuffer';
 
     socket.on('close', function close() {
@@ -148,7 +149,7 @@ User.prototype.connectToWebSocket = function() {
       self.logger.log(`Connected WebSocket to: "${url}".`);
 
       function send_ping() {
-        socket.send(`Wire is so much nicer with internet!`);
+        socket.send('Wire is so much nicer with internet!');
       }
 
       self.webSocketIntervalID = setInterval(send_ping, 10000);
@@ -156,15 +157,14 @@ User.prototype.connectToWebSocket = function() {
     });
 
     socket.on('message', function message(data) {
-      var notification = JSON.parse(bazinga64.Converter.arrayBufferViewToStringUTF8(data));
-      var events = notification.payload;
-      for (var event of events) {
+      const notification = JSON.parse(bazinga64.Converter.arrayBufferViewToStringUTF8(data));
+      const events = notification.payload;
+      for (let event of events) {
         self.logger.log(`Received event of type "${event.type}".`, JSON.stringify(event));
 
         switch (event.type) {
           case 'conversation.otr-message-add':
-            var ciphertext = event.data.text;
-            self.decryptMessage(event, ciphertext);
+            self.decryptMessage(event, event.data.text);
             break;
           case 'user.connection':
             self.service.user.autoConnect(event);
@@ -183,16 +183,15 @@ User.prototype.connectToWebSocket = function() {
 
 // TODO: Make private
 User.prototype.decryptMessage = function(event, ciphertext) {
-  var self = this;
+  let self = this;
 
   this.cryptoboxService.decryptMessage(event, ciphertext)
     .then(function(decryptedMessage) {
-      var genericMessage = self.protocolBuffer.GenericMessage.decode(decryptedMessage);
+      const genericMessage = self.protocolBuffer.GenericMessage.decode(decryptedMessage);
 
       switch (genericMessage.content) {
         case 'text':
-          var text = genericMessage.text.content;
-          self.logger.log(`Received text: "${text}".`);
+          self.logger.log(`Received text: "${genericMessage.text.content}".`);
           break;
         default:
           self.logger.log(`Ignored event "${genericMessage.content}".`);

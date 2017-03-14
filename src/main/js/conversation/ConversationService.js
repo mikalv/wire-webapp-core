@@ -17,9 +17,11 @@
  *
  */
 
-var ConversationAPI = require('./ConversationAPI');
-var Logdown = require('logdown');
-var UUID = require('pure-uuid');
+'use strict';
+
+const ConversationAPI = require('./ConversationAPI');
+const Logdown = require('logdown');
+const UUID = require('pure-uuid');
 
 /**
  * @constructor
@@ -33,24 +35,24 @@ function ConversationService(client) {
 }
 
 ConversationService.prototype.sendTextMessage = function(conversationId, text) {
-  var self = this;
+  let self = this;
 
-  var genericMessage = self.client.protocolBuffer.GenericMessage.create({
+  const genericMessage = self.client.protocolBuffer.GenericMessage.create({
     messageId: new UUID(4).format(),
-    text: self.client.protocolBuffer.Text.create({content: text})
+    text: self.client.protocolBuffer.Text.create({content: text}),
   });
 
   return new Promise(function(resolve, reject) {
-    self.logger.log(`Constructed Generic Message (ID "${genericMessage.message_id}").`);
+    self.logger.log(`Constructed Generic Message (ID "${genericMessage.messageId}").`);
     self.logger.log(`Getting lists of users (and their clients) in conversation (ID "${conversationId}").`);
     self.conversationAPI.sendMessage(conversationId)
       .then(function(response) {
-        self.logger.log(`Received user/client map.`);
+        self.logger.log('Received user/client map.');
         return self.conversationAPI.getPreKeys(response.body.missing);
       })
       .then(function(response) {
         self.logger.log(`Received PreKeys for "${Object.keys(response.body).length}" users (based on user/client map).`);
-        var typedArray = self.client.protocolBuffer.GenericMessage.encode(genericMessage).finish();
+        const typedArray = self.client.protocolBuffer.GenericMessage.encode(genericMessage).finish();
         return self.cryptoboxService.encrypt(typedArray, response.body);
       })
       .then(function(payloads) {
