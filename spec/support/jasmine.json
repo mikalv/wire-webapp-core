@@ -5,7 +5,7 @@
   "random": true,
   "spec_dir": "spec",
   "spec_files": [
-    "**/*[sS]pec.js"
+    "./main/js/**/*[sS]pec.js"
   ],
   "stopSpecOnExpectationFailure": true
 }

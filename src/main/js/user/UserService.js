@@ -17,10 +17,8 @@
  *
  */
 
-var Logdown = require('logdown');
-
-var CryptoHelper = require('../util/CryptoHelper.js');
-var UserAPI = require('./UserAPI.js');
+const Logdown = require('logdown');
+const UserAPI = require('./UserAPI.js');
 
 /**
  * @constructor
@@ -74,7 +72,7 @@ UserService.prototype.login = function() {
       })
       .then(function() {
         self.logger.log(`Creating signaling keys...`);
-        return CryptoHelper.generateSignalingKey();
+        return self.user.cryptoboxService.generateSignalingKey();
       })
       .then(function(signalingKey) {
         self.user.clientInfo.sigkeys = signalingKey;

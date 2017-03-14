@@ -18,39 +18,40 @@
  */
 
 const cryptobox = require('wire-webapp-cryptobox');
-const ProtoBuf = require('protobufjs');
+const protobuf = require('protobufjs');
 const UUID = require('pure-uuid');
 const wire = require('../../../../src/main/js/index');
 
-describe('CryptoHelper', function() {
+describe('CryptoboxService', () => {
 
-  var buffers = undefined;
-  var cryptoboxInstance = undefined;
+  let buffers = {};
+  let cryptoboxService = undefined;
 
   beforeAll(function(done) {
     var file = 'node_modules/wire-webapp-protocol-messaging/proto/messages.proto';
-    ProtoBuf.loadProtoFile(file, function(error, builder) {
-      if (error) {
-        done.fail(error.message);
-      } else {
-        buffers = builder.build();
+
+    protobuf.load(file)
+      .then(function(root) {
+        buffers.GenericMessage = root.lookup('GenericMessage');
+        buffers.Text = root.lookup('Text');
         done();
-      }
-    });
+      })
+      .catch(done.fail);
   });
 
-  describe('encrypt', function() {
+  beforeEach(done => {
+    const cryptoboxInstance = new cryptobox.Cryptobox(new cryptobox.store.Cache());
+    cryptoboxInstance.init()
+      .then(() => {
+        cryptoboxService = new wire.cryptobox.CryptoboxService(cryptoboxInstance);
+        done();
+      })
+      .catch(done.fail);
+  });
 
-    beforeEach(function(done) {
-      cryptoboxInstance = new cryptobox.Cryptobox(new cryptobox.store.Cache());
-      cryptoboxInstance.init()
-        .then(function() {
-          done();
-        })
-        .catch(done.fail);
-    });
+  describe('encrypt', () => {
 
-    it('encrypts a payload for multiple users', function(done) {
+    it('encrypts a payload for multiple users', done => {
       const preKeyMap = {
         "062418ea-9b93-4d93-b59b-11aba3f702d8": {
           "a4d7fcac1e8592f2": {
@@ -107,11 +108,16 @@ describe('CryptoHelper', function() {
         }
       };
 
-      var message = new buffers.GenericMessage(new UUID(4).format());
-      message.set('text', new buffers.Text('Hello'));
+      const payload = {
+        messageId: new UUID(4).format(),
+        text: buffers.Text.create({content: 'Hello'})
+      };
+      const message = buffers.GenericMessage.create(payload);
+      const buffer = buffers.GenericMessage.encode(message).finish();
+      const typedArray = new Uint8Array(buffer);
 
-      wire.util.CryptoHelper.encrypt(cryptoboxInstance, message, preKeyMap)
-        .then(function(encryptions) {
+      cryptoboxService.encrypt(typedArray, preKeyMap)
+        .then(encryptions => {
           expect(encryptions.length).toBe(12);
           done();
         })

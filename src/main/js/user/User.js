@@ -17,15 +17,16 @@
  *
  */
 
-var bazinga64 = require('bazinga64');
-var cryptobox = require('wire-webapp-cryptobox');
-var Logdown = require('logdown');
-var WebSocket = require('ws');
+const bazinga64 = require('bazinga64');
+const cryptobox = require('wire-webapp-cryptobox');
+const Logdown = require('logdown');
+const protobuf = require('protobufjs');
+const WebSocket = require('ws');
 
-var ConversationService = require('../conversation/ConversationService.js');
-var CryptoHelper = require('../util/CryptoHelper.js');
-var UserAPI = require('./UserAPI.js');
-var UserService = require('./UserService.js');
+const ConversationService = require('../conversation/ConversationService.js');
+const CryptoboxService = require('../cryptobox/CryptoboxService');
+const UserAPI = require('./UserAPI.js');
+const UserService = require('./UserService.js');
 
 function User(credentials, cryptoboxInstance) {
   this.accessToken = undefined;
@@ -42,11 +43,12 @@ function User(credentials, cryptoboxInstance) {
     type: 'temporary'
   };
   this.cryptobox = (cryptoboxInstance) ? cryptoboxInstance : new cryptobox.Cryptobox(new cryptobox.store.Cache());
+  this.cryptoboxService = new CryptoboxService(this.cryptobox);
   this.email = credentials.email;
   this.logger = new Logdown({prefix: 'wire.core.user.User', alignOutput: true});
   this.myself = undefined;
   this.password = credentials.password;
-  this.protocolBuffer = undefined;
+  this.protocolBuffer = {};
   this.webSocket = undefined;
   this.webSocketIntervalID = undefined;
   this.service = {
@@ -61,7 +63,7 @@ User.prototype.subscribe = function() {
   var topicName = cryptobox.Cryptobox.TOPIC.NEW_PREKEYS;
 
   function callback(data) {
-    self.logger.log(`Received "${data.length}" new PreKey(s) (via "${topicName}").`, data);
+    self.logger.log(`Received "${data.length}" new PreKey(s) (via "${topicName}").`);
 
     var serializedPreKeys = [];
     data.forEach(function(preKey) {
@@ -90,9 +92,12 @@ User.prototype.login = function(connectSocket) {
   var self = this;
 
   return new Promise(function(resolve, reject) {
-    CryptoHelper.loadProtocolBuffers()
-      .then(function(builder) {
-        self.protocolBuffer = builder.build();
+    // TODO: Use new Protobuf.js API
+
+    protobuf.load('node_modules/wire-webapp-protocol-messaging/proto/messages.proto')
+      .then(function(root) {
+        self.protocolBuffer.GenericMessage = root.lookup('GenericMessage');
+        self.protocolBuffer.Text = root.lookup('Text');
         return self.service.user.login();
       })
       .then(function(selfInfo) {
@@ -180,9 +185,9 @@ User.prototype.connectToWebSocket = function() {
 User.prototype.decryptMessage = function(event, ciphertext) {
   var self = this;
 
-  CryptoHelper.decryptMessage(self.cryptobox, event, ciphertext)
+  this.cryptoboxService.decryptMessage(event, ciphertext)
     .then(function(decryptedMessage) {
-      var genericMessage = new self.protocolBuffer.GenericMessage.decode(decryptedMessage);
+      var genericMessage = self.protocolBuffer.GenericMessage.decode(decryptedMessage);
 
       switch (genericMessage.content) {
         case 'text':

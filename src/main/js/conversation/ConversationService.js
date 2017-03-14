@@ -17,9 +17,8 @@
  *
  */
 
+var ConversationAPI = require('./ConversationAPI');
 var Logdown = require('logdown');
-var ConversationAPI = require('./ConversationAPI.js');
-var CryptoHelper = require('../util/CryptoHelper.js');
 var UUID = require('pure-uuid');
 
 /**
@@ -29,14 +28,17 @@ var UUID = require('pure-uuid');
 function ConversationService(client) {
   this.client = client;
   this.conversationAPI = new ConversationAPI(client);
+  this.cryptoboxService = client.cryptoboxService;
   this.logger = new Logdown({prefix: 'wire.core.conversation.ConversationService', alignOutput: true});
 }
 
 ConversationService.prototype.sendTextMessage = function(conversationId, text) {
   var self = this;
 
-  var genericMessage = new self.client.protocolBuffer.GenericMessage(new UUID(4).format());
-  genericMessage.set('text', new self.client.protocolBuffer.Text(text));
+  var genericMessage = self.client.protocolBuffer.GenericMessage.create({
+    messageId: new UUID(4).format(),
+    text: self.client.protocolBuffer.Text.create({content: text})
+  });
 
   return new Promise(function(resolve, reject) {
     self.logger.log(`Constructed Generic Message (ID "${genericMessage.message_id}").`);
@@ -48,7 +50,8 @@ ConversationService.prototype.sendTextMessage = function(conversationId, text) {
       })
       .then(function(response) {
         self.logger.log(`Received PreKeys for "${Object.keys(response.body).length}" users (based on user/client map).`);
-        return CryptoHelper.encrypt(self.client.cryptobox, genericMessage, response.body);
+        var typedArray = self.client.protocolBuffer.GenericMessage.encode(genericMessage).finish();
+        return self.cryptoboxService.encrypt(typedArray, response.body);
       })
       .then(function(payloads) {
         return self.conversationAPI.sendMessage(conversationId, payloads);
