@@ -5,19 +5,20 @@
   },
   "dependencies": {
     "bazinga64": "5.0.3",
-    "logdown": "2.0.3",
+    "logdown": "2.2.0",
     "popsicle": "9.1.0",
     "popsicle-status": "2.0.0",
     "protobufjs": "6.6.5",
     "pure-uuid": "1.4.4",
     "wire-webapp-cryptobox": "4.0.1",
     "wire-webapp-protocol-messaging": "1.18.0",
-    "ws": "1.1.1"
+    "ws": "2.2.1"
   },
   "devDependencies": {
-    "browser-sync": "^2.18.6",
-    "gulp": "^3.9.1",
-    "jasmine": "^2.5.2"
+    "bower": "1.8.0",
+    "browser-sync": "2.18.6",
+    "gulp": "3.9.1",
+    "jasmine": "2.5.2"
   },
   "description": "Wire for Web's communication core.",
   "license": "GPL-3.0",
