@@ -67,19 +67,17 @@ User.prototype.subscribe = function() {
     self.logger.log(`Received "${data.length}" new PreKey(s) (via "${topicName}").`);
 
     const serializedPreKeys = [];
-    data.forEach(function(preKey) {
+    data.forEach((preKey) => {
       const preKeyJson = self.cryptobox.serialize_prekey(preKey);
       serializedPreKeys.push(preKeyJson);
     });
 
     self.service.user.uploadPreKeys(serializedPreKeys)
-      .then(function() {
-        const ids = serializedPreKeys.map(function(serializedPreKey) {
-          return serializedPreKey.id;
-        }).join(', ');
+      .then(() => {
+        const ids = serializedPreKeys.map((serializedPreKey) => serializedPreKey.id).join(', ');
         self.logger.log(`Successfully uploaded "${serializedPreKeys.length}" new PreKey(s). IDs: ${ids}`);
       })
-      .catch(function(response) {
+      .catch((response) => {
         self.logger.log('Failure during PreKey upload.', response);
       });
   }
@@ -92,28 +90,28 @@ User.prototype.login = function(connectSocket) {
   const connectWebSocket = connectSocket || false;
   let self = this;
 
-  return new Promise(function(resolve, reject) {
+  return new Promise((resolve, reject) => {
     // TODO: Use new Protobuf.js API
 
     protobuf.load('node_modules/wire-webapp-protocol-messaging/proto/messages.proto')
-      .then(function(root) {
+      .then((root) => {
         self.protocolBuffer.GenericMessage = root.lookup('GenericMessage');
         self.protocolBuffer.Text = root.lookup('Text');
         return self.service.user.login();
       })
-      .then(function(selfInfo) {
+      .then((selfInfo) => {
         self.myself = selfInfo;
         self.logger.log(`Successfully logged in (User ID "${self.myself.id}").`);
         self.service.conversation = new ConversationService(self);
       })
-      .then(function() {
+      .then(() => {
         if (connectWebSocket) {
           return self.connectToWebSocket();
         } else {
           return undefined;
         }
       })
-      .then(function(webSocket) {
+      .then((webSocket) => {
         self.webSocket = webSocket;
         resolve(self.service);
       })
@@ -135,7 +133,7 @@ User.prototype.disconnectFromWebSocket = function() {
 User.prototype.connectToWebSocket = function() {
   let self = this;
 
-  return new Promise(function(resolve) {
+  return new Promise((resolve) => {
     const url = `wss://prod-nginz-ssl.wire.com/await?access_token=${self.accessToken}&client=${self.client.id}`;
 
     const socket = new WebSocket(url);
@@ -186,7 +184,7 @@ User.prototype.decryptMessage = function(event, ciphertext) {
   let self = this;
 
   this.cryptoboxService.decryptMessage(event, ciphertext)
-    .then(function(decryptedMessage) {
+    .then((decryptedMessage) => {
       const genericMessage = self.protocolBuffer.GenericMessage.decode(decryptedMessage);
 
       switch (genericMessage.content) {
@@ -198,7 +196,7 @@ User.prototype.decryptMessage = function(event, ciphertext) {
       }
 
     })
-    .catch(function(error) {
+    .catch((error) => {
       self.logger.log(`Decryption failed: ${error.message} (${error.stack})`);
     });
 };

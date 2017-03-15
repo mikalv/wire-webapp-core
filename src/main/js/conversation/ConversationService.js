@@ -42,23 +42,21 @@ ConversationService.prototype.sendTextMessage = function(conversationId, text) {
     text: self.client.protocolBuffer.Text.create({content: text}),
   });
 
-  return new Promise(function(resolve, reject) {
+  return new Promise((resolve, reject) => {
     self.logger.log(`Constructed Generic Message (ID "${genericMessage.messageId}").`);
     self.logger.log(`Getting lists of users (and their clients) in conversation (ID "${conversationId}").`);
     self.conversationAPI.sendMessage(conversationId)
-      .then(function(response) {
+      .then((response) => {
         self.logger.log('Received user/client map.');
         return self.conversationAPI.getPreKeys(response.body.missing);
       })
-      .then(function(response) {
+      .then((response) => {
         self.logger.log(`Received PreKeys for "${Object.keys(response.body).length}" users (based on user/client map).`);
         const typedArray = self.client.protocolBuffer.GenericMessage.encode(genericMessage).finish();
         return self.cryptoboxService.encrypt(typedArray, response.body);
       })
-      .then(function(payloads) {
-        return self.conversationAPI.sendMessage(conversationId, payloads);
-      })
-      .then(function(response) {
+      .then((payloads) => self.conversationAPI.sendMessage(conversationId, payloads))
+      .then((response) => {
         if (response.status === 400) {
           reject(new Error(response.body.message));
         } else {

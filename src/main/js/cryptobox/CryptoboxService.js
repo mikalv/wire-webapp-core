@@ -16,9 +16,9 @@ class CryptoboxService {
       .then(() => {
         return this.cryptobox.encrypt(sessionId, typedArray, decodedPreKeyBundle.buffer);
       })
-      .then(encryptedPayload => bazinga64.Encoder.toBase64(encryptedPayload).asString)
-      .catch(error => '💣')
-      .then(encryptedPayload => ({
+      .then((encryptedPayload) => bazinga64.Encoder.toBase64(encryptedPayload).asString)
+      .catch((error) => '💣')
+      .then((encryptedPayload) => ({
         sessionId,
         encryptedPayload,
       }));

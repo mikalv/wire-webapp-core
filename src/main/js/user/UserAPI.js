@@ -76,7 +76,7 @@ UserAPI.prototype.removeCookies = function(labels) {
     body: {
       email: self.user.email,
       password: self.user.password,
-      labels: labels,
+      labels,
     },
     headers: {
       'Content-Type': 'application/json; charset=utf-8',

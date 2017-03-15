@@ -33,11 +33,11 @@ function ConversationAPI(user) {
 }
 
 // TODO: Move to CryptoHelper!
-ConversationAPI.prototype.createPayLoadMap = function(payloads) {
+ConversationAPI.prototype.createPayLoadMap = (payloads) => {
   const recipients = {};
 
   if (payloads) {
-    payloads.forEach(function(payload) {
+    payloads.forEach((payload) => {
       const sessionId = payload.sessionId;
       const encrypted = payload.encryptedPayload;
 

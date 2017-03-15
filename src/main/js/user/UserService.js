@@ -35,26 +35,24 @@ function UserService(user) {
 UserService.prototype.login = function() {
   let self = this;
 
-  return new Promise(function(resolve, reject) {
+  return new Promise((resolve, reject) => {
     self.userAPI.login()
-      .then(function(response) {
+      .then((response) => {
         // TODO: Such things should be handles with a "catch" block
         if (response.status === 429) {
           self.logger.warn('Logins are too frequent. We need to logout the user on all clients...');
           self.userAPI.removeCookies()
-            .then(function() {
-              return self.userAPI.login();
-            });
+            .then(() => self.userAPI.login());
         } else {
           return response;
         }
       })
-      .then(function(response) {
+      .then((response) => {
         self.user.accessToken = response.body.access_token;
         self.logger.log(`Access Token is "${self.user.accessToken}".`);
         return self.user.cryptobox.init();
       })
-      .then(function(initialPreKeys) {
+      .then((initialPreKeys) => {
         const fingerprint = self.user.cryptobox.identity.public_key.fingerprint();
         self.logger.log(`Public fingerprint is "${fingerprint}".`);
 
@@ -63,7 +61,7 @@ UserService.prototype.login = function() {
 
         // Serialize all other PreKeys
         let serializedPreKeys = [];
-        initialPreKeys.forEach(function(preKey) {
+        initialPreKeys.forEach((preKey) => {
           const preKeyJson = self.user.cryptobox.serialize_prekey(preKey);
           if (preKeyJson.id !== 65535) {
             serializedPreKeys.push(preKeyJson);
@@ -72,22 +70,22 @@ UserService.prototype.login = function() {
 
         self.user.clientInfo.prekeys = serializedPreKeys;
       })
-      .then(function() {
+      .then(() => {
         self.logger.log('Creating signaling keys...');
         return self.user.cryptoboxService.generateSignalingKey();
       })
-      .then(function(signalingKey) {
+      .then((signalingKey) => {
         self.user.clientInfo.sigkeys = signalingKey;
         self.logger.log('Created signaling key.');
         self.logger.log(`Registering new "${self.user.clientInfo.type}" client of type "${self.user.clientInfo.class}/${self.user.clientInfo.model}/${self.user.clientInfo.label}" with cookie ID "${self.user.clientInfo.cookie}"...`);
         return self.userAPI.registerClient(self.user.clientInfo);
       })
-      .then(function(response) {
+      .then((response) => {
         self.user.client = response.body;
         self.logger.log(`Registered Client (ID "${self.user.client.id}").`);
         return self.userAPI.getSelf(self.user.accessToken);
       })
-      .then(function(response) {
+      .then((response) => {
         resolve(response.body);
       })
       .catch(reject);
@@ -101,10 +99,10 @@ UserService.prototype.login = function() {
 UserService.prototype.logout = function() {
   let self = this;
 
-  return new Promise(function(resolve) {
+  return new Promise((resolve) => {
     self.logger.log(`Logging out User with ID "${self.user.myself.id}".`);
     self.userAPI.removeCookies([self.user.clientInfo.cookie])
-      .then(function(response) {
+      .then((response) => {
         if (response.status === 200) {
           self.user.disconnectFromWebSocket();
           resolve(self.user.service);
@@ -116,7 +114,7 @@ UserService.prototype.logout = function() {
 UserService.prototype.autoConnect = function(event) {
   let self = this;
 
-  return new Promise(function(resolve) {
+  return new Promise((resolve) => {
     const involved = [event.connection.from, event.connection.to];
     const myIndex = involved.indexOf(self.user.myself.id);
     if (myIndex > -1) {
@@ -126,11 +124,11 @@ UserService.prototype.autoConnect = function(event) {
 
     if (event.connection.status === 'pending') {
       self.userAPI.updateConnectionStatus(self.user.accessToken, otherUserID, 'accepted')
-        .then(function(response) {
+        .then((response) => {
           self.logger.log('Auto-Connection successful', response);
           resolve(self.user.service);
         })
-        .catch(function(error) {
+        .catch((error) => {
           self.logger.log('Auto-Connection failed', error);
         });
     }
@@ -140,10 +138,10 @@ UserService.prototype.autoConnect = function(event) {
 UserService.prototype.uploadPreKeys = function(preKeys) {
   let self = this;
 
-  return new Promise(function(resolve, reject) {
+  return new Promise((resolve, reject) => {
     self.logger.log(`Uploading "${preKeys.length}" new PreKey(s) to the backend...`, preKeys);
     self.userAPI.updateClient(preKeys)
-      .then(function(response) {
+      .then((response) => {
         if (response.status === 200) {
           resolve(response.body);
         } else {
