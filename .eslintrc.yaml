@@ -7,6 +7,7 @@ extends:
   "eslint:recommended"
 
 rules:
+  arrow-parens: [2, always]
   comma-dangle: [2, always-multiline]
   handle-callback-err: 2
   indent: [2, 2, {SwitchCase: 1}]

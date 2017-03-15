@@ -32,7 +32,7 @@
     "postinstall": "bower install",
     "lint": "eslint src/main/js/**/*.js --fix",
     "start": "gulp",
-    "test": "jasmine"
+    "test": "npm run lint && jasmine"
   },
   "version": "0.3.0"
 }
