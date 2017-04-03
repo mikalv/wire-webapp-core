@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "bazinga64": "5.0.3",
-    "system.js": "0.20.9",
+    "system.js": "0.20.11",
     "pure-uuid": "1.4.4"
   },
   "description": "Wire for Web's communication core.",
