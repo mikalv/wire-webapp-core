@@ -9,7 +9,7 @@
     "logdown": "2.2.0",
     "popsicle": "9.1.0",
     "popsicle-status": "2.0.0",
-    "protobufjs": "6.7.0",
+    "protobufjs": "6.7.3",
     "pure-uuid": "1.4.5",
     "wire-webapp-cryptobox": "5.0.4",
     "wire-webapp-protocol-messaging": "1.18.0",
