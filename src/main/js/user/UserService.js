@@ -49,7 +49,6 @@ UserService.prototype.login = function() {
       })
       .then((response) => {
         self.user.accessToken = response.body.access_token;
-        self.logger.log(`Access Token is "${self.user.accessToken}".`);
         return self.user.cryptobox.init();
       })
       .then((initialPreKeys) => {
