@@ -1,8 +1,4 @@
 {
-  "author": "Wire",
-  "bugs": {
-    "url": "https://github.com/wireapp/wire-webapp-core/issues"
-  },
   "dependencies": {
     "bazinga64": "5.0.3",
     "eslint": "3.19.0",
@@ -15,13 +11,13 @@
     "wire-webapp-protocol-messaging": "1.18.0",
     "ws": "3.0.0"
   },
+  "description": "Wire for Web's communication core.",
   "devDependencies": {
     "bower": "1.8.0",
     "browser-sync": "2.18.12",
     "gulp": "3.9.1",
     "jasmine": "2.6.0"
   },
-  "description": "Wire for Web's communication core.",
   "license": "GPL-3.0",
   "main": "src/main/js/index.js",
   "name": "wire-webapp-core",
