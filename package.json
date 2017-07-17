@@ -2,7 +2,7 @@
   "dependencies": {
     "bazinga64": "5.0.3",
     "eslint": "3.19.0",
-    "logdown": "2.2.0",
+    "logdown": "3.0.2",
     "popsicle": "9.1.0",
     "popsicle-status": "2.0.1",
     "protobufjs": "6.7.3",
