@@ -7,7 +7,7 @@
     "popsicle-status": "2.0.1",
     "protobufjs": "6.7.3",
     "pure-uuid": "1.4.6",
-    "wire-webapp-cryptobox": "5.1.1",
+    "wire-webapp-cryptobox": "6.1.4",
     "wire-webapp-protocol-messaging": "1.18.0",
     "ws": "3.0.0"
   },
